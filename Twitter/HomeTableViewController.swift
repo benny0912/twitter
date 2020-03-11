@@ -17,27 +17,26 @@ class HomeTableViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+        numberOfTweet = 20
         loadTweet()
         myRefreshControl.addTarget(self, action: #selector(loadTweet), for: .valueChanged)
         tableView.refreshControl = myRefreshControl
     }
     
-//    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-//        if indexPath.row + 1 == tweetArray.count {
-//            loadMoreTweets()
-//        }
-//    }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(true)
+        self.loadTweet()
+    }
+    
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if indexPath.row + 1 == tweetArray.count {
+            loadMoreTweets()
+        }
+    }
     
     @objc func loadTweet() {
-        //numberOfTweet = 20
         let myUrl = "https://api.twitter.com/1.1/statuses/home_timeline.json"
-        let myParams = ["count": 20]
+        let myParams = ["count": numberOfTweet]
         TwitterAPICaller.client?.getDictionariesRequest(url: myUrl, parameters: myParams as [String : Any], success: { (tweets: [NSDictionary]) in
             self.tweetArray.removeAll()
             for tweet in tweets {
@@ -50,22 +49,22 @@ class HomeTableViewController: UITableViewController {
         })
     }
     
-//    func loadMoreTweets() {
-//        let myUrl = "https://api.twitter.com/1.1/statuses/home_timeline.json"
-//        numberOfTweet = numberOfTweet + 20
-//        let myParams = ["count": numberOfTweet]
-//        TwitterAPICaller.client?.getDictionariesRequest(url: myUrl, parameters: myParams as [String : Any], success: { (tweets: [NSDictionary]) in
-//            self.tweetArray.removeAll()
-//            for tweet in tweets {
-//                self.tweetArray.append(tweet)
-//            }
-//            DispatchQueue.main.async {
-//                self.tableView.reloadData()
-//            }
-//        }, failure: { (error) in
-//            print(error.localizedDescription)
-//        })
-//    }
+    func loadMoreTweets() {
+        let myUrl = "https://api.twitter.com/1.1/statuses/home_timeline.json"
+        numberOfTweet = numberOfTweet + 20
+        let myParams = ["count": numberOfTweet]
+        TwitterAPICaller.client?.getDictionariesRequest(url: myUrl, parameters: myParams as [String : Any], success: { (tweets: [NSDictionary]) in
+            self.tweetArray.removeAll()
+            for tweet in tweets {
+                self.tweetArray.append(tweet)
+            }
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }, failure: { (error) in
+            print(error.localizedDescription)
+        })
+    }
 
     @IBAction func logoutPressed(_ sender: Any) {
         TwitterAPICaller.client?.logout()
@@ -80,6 +79,10 @@ class HomeTableViewController: UITableViewController {
         cell.profileImageView.af_setImage(withURL: imgUrl!)
         cell.userNameLabel.text = (user["name"] as! String)
         cell.tweetContentLabel.text = (tweetArray[indexPath.row]["text"] as! String)
+        cell.setFavourited(tweetArray[indexPath.row]["favorited"] as! Bool)
+        cell.tweetId = tweetArray[indexPath.row]["id"] as! Int
+        cell.retweeted = tweetArray[indexPath.row]["retweeted"] as! Bool
+        cell.setRetweeted(tweetArray[indexPath.row]["retweeted"] as! Bool)
         return cell
     }
     
